@@ -1,0 +1,108 @@
+import random
+import time
+
+# Setup game state
+squad = ["Jax", "Liv", "Kai", "Zoey", "Ace"]
+health = {name: 100 for name in squad}
+resources = {"grub": 200, "ammo": 50, "clothes": 10, "parts": 5, "cash": 500}
+miles = 0
+days = 0
+landmarks = {500: "Kansas River", 1000: "Fort Laramie", 1500: "Snake River", 2000: "Oregon"}
+
+# Game loop
+print("Squad’s dipping from Missouri—2,000 miles to Oregon. Let’s full send!")
+while miles < 2000 and len(squad) > 0 and resources["parts"] >= 0:
+    days += 1
+    print(f"\nDay {days}: {miles} miles down, {2000 - miles} to go.")
+    print(f"Squad: {', '.join(squad)} | Grub: {resources['grub']} | Cash: {resources['cash']}")
+
+    # Travel pace
+    pace = eval(input("Pick your vibe: [1] Chill (5 mi), [2] Flex (10 mi), [3] Full Send (15 mi): "))
+    pace = {"1": 5, "2": 10, "3": 15}.get(pace, 10)  # Default to Flex if input’s sus
+    miles += pace
+
+    # Daily grub cost
+    grub_cost = 5 * len(squad)
+    resources["grub"] -= grub_cost
+    if resources["grub"] < 0:
+        print("Grub’s gone—squad’s starving!")
+        for name in squad:
+            health[name] -= 10
+
+    # Random event (1 in 3 chance)
+    if random.randint(1, 3) == 1:
+        event = random.randint(1, 6)
+        if event == 1:
+            sick = random.choice(squad)
+            print(f"{sick} caught dysentery—FML. Meds (20 cash)?")
+            if eval(input("[y/n]: ")) == "y" and resources["cash"] >= 20:
+                resources["cash"] -= 20
+                print(f"{sick}’s back, king.")
+            else:
+                health[sick] -= 30
+        elif event == 2:
+            print("Wagon wheel’s yeeted—fix it (1 part)?")
+            if eval(input("[y/n]: ")) == "y" and resources["parts"] > 0:
+                resources["parts"] -= 1
+                print("Wagon’s gucci.")
+            else:
+                print("Limping it—vibes are off.")
+                pace //= 2
+        elif event == 3:
+            print("Buffalo herd’s popping off—clap some protein?")
+            if eval(input("[y/n]: ")) == "y" and resources["ammo"] >= 2:
+                resources["ammo"] -= 2
+                if random.randint(1, 6) <= 3:
+                    resources["grub"] += 50
+                    print("Stacked 50 grub—lit!")
+                else:
+                    print("Whiffed it—L.")
+        elif event == 4 and miles % 500 != 0:  # Avoid landmark overlap
+            print("River’s sus—[1] Ford (risky), [2] Caulk (chill), [3] Ferry (50 cash)?")
+            choice = eval(input("Choice: "))
+            if choice == "1" and random.randint(1, 6) > 2:
+                print("Wagon’s dripping but you’re good.")
+            elif choice == "3" and resources["cash"] >= 50:
+                resources["cash"] -= 50
+                print("Ferry’s clutch—smooth sailing.")
+            else:
+                print("River clapped you—someone’s shook.")
+                health[random.choice(squad)] -= 20
+        elif event == 5:
+            print("Trader rolls up—swap 20 grub for 10 ammo?")
+            if eval(input("[y/n]: ")) == "y" and resources["grub"] >= 20:
+                resources["grub"] -= 20
+                resources["ammo"] += 10
+                print("Deal’s fire.")
+        elif event == 6:
+            print("Weather’s trash—storm slows you down.")
+            pace //= 2
+
+    # Landmark check
+    for lm_miles, lm_name in list(landmarks.items()):
+        if miles >= lm_miles > miles - pace:
+            print(f"Hit {lm_name}—big flex!")
+            if lm_name == "Oregon":
+                break
+
+    # Health check
+    for name in list(squad):
+        if health[name] <= 0:
+            print(f"{name} ate it—RIP, legend.")
+            squad.remove(name)
+        elif resources["grub"] < 0:
+            health[name] -= 5  # Extra starvation damage
+
+    # Wagon check
+    if resources["parts"] < 0:
+        print("Wagon’s toast—no parts, no dice.")
+        break
+
+    time.sleep(0.5)  # Retro pacing
+
+# Endgame
+if miles >= 2000 and len(squad) > 0:
+    print(f"\nDay {days}: Oregon’s popping off—y’all made it with {len(squad)} legends! W!")
+else:
+    print("\nTrail said ‘hold this L’—squad’s gone or wagon’s clapped. GG.")
+
